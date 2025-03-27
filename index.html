@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>랜덤 발표자 룰렛</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 30px; position: relative; }
+    canvas { margin-top: 20px; background: #fff; }
+    input { margin: 5px; padding: 5px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+    .developer {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 12px;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <div class="developer">개발자 최성채</div>
+  <h1>랜덤 발표자 룰렛</h1>
+  <div>
+    시작 번호: <input type="number" id="startNum" placeholder="예: 1">
+    끝 번호: <input type="number" id="endNum" placeholder="예: 10">
+    제외 번호(쉼표로 구분): <input type="text" id="excludeNums" placeholder="예: 3,5,7">
+  </div>
+  <div>
+    <button onclick="startRoulette()">Start</button>
+    <button onclick="resetRoulette()">Reset</button>
+  </div>
+  <canvas id="rouletteCanvas" width="600" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("rouletteCanvas");
+    const ctx = canvas.getContext("2d");
+    let numbers = [];
+    let spinning = false;
+    let angle = 0;
+    let interval;
+
+    function getInputs() {
+      const start = parseInt(document.getElementById("startNum").value);
+      const end = parseInt(document.getElementById("endNum").value);
+      const exclude = document.getElementById("excludeNums").value
+        .split(',')
+        .map(num => parseInt(num.trim()))
+        .filter(num => !isNaN(num));
+
+      numbers = [];
+      if (!isNaN(start) && !isNaN(end)) {
+        for (let i = start; i <= end; i++) {
+          if (!exclude.includes(i)) {
+            numbers.push(i);
+          }
+        }
+      }
+    }
+
+    function drawRoulette() {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 250;
+      const sliceAngle = (2 * Math.PI) / numbers.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < numbers.length; i++) {
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.fillStyle = `hsl(${(i * 360) / numbers.length}, 80%, 70%)`;
+        ctx.arc(centerX, centerY, radius, angle + i * sliceAngle, angle + (i + 1) * sliceAngle);
+        ctx.fill();
+
+        // 텍스트
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(angle + (i + 0.5) * sliceAngle);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "black";
+        ctx.font = "18px Arial";
+        ctx.fillText(numbers[i], radius - 15, 5);
+        ctx.restore();
+      }
+
+      // 룰렛 촉 (화살표)
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - radius - 20);
+      ctx.lineTo(centerX - 15, centerY - radius - 50);
+      ctx.lineTo(centerX + 15, centerY - radius - 50);
+      ctx.closePath();
+      ctx.fillStyle = "#e91e63";
+      ctx.fill();
+    }
+
+    function startRoulette() {
+      if (spinning) return;
+
+      getInputs();
+      if (numbers.length === 0) {
+        alert("선택 가능한 번호가 없습니다.");
+        return;
+      }
+
+      spinning = true;
+
+      interval = setInterval(() => {
+        angle += 0.3;
+        drawRoulette();
+      }, 20);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        spinning = false;
+        drawRoulette();
+      }, 5000);
+    }
+
+    function resetRoulette() {
+      clearInterval(interval);
+      spinning = false;
+      angle = 0;
+      getInputs();
+      drawRoulette();
+    }
+
+    drawRoulette();
+  </script>
+</body>
+</html>
